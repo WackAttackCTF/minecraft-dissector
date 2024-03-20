@@ -1,6 +1,6 @@
 const dataPath = require("./minecraft-data/data/dataPaths.json")
 
-const data = require(`./minecraft-data/data/${dataPath.pc["1.16.3"].protocol}/protocol.json`)
+const data = require(`./minecraft-data/data/${dataPath.pc["1.8"].protocol}/protocol.json`)
 const assert = require("assert")
 
 function indent(code, indent = "  ") {
@@ -156,7 +156,7 @@ minecraft_add_buffer(tree, hf_${path}, tvb, &offset, ${path}_len);`,
 }
 
 const functions = []
-const hf = []
+let hf = []
 
 function generate(namespace, skip = []) {
   const types = {}
@@ -214,7 +214,19 @@ function generate(namespace, skip = []) {
 ${indent(
     Object.entries(names)
       .map(([id, name]) => {
-        if (skip.includes(name)) {
+
+        let is_readable = false;
+        try {
+          read(names_to_types[name], undefined, {
+            path: `${path}_${name}`,
+            read,
+          })
+          is_readable = true;
+       } catch (e) {
+          is_readable = false;
+       }
+
+        if (skip.includes(name) || !is_readable) {
           return `case ${id}:
   col_set_str(pinfo->cinfo, COL_INFO, "${unsnake(name)} [${namespace[0]}] (${namespace[1]})");
   break;`
@@ -273,6 +285,8 @@ generate(["play", "toClient"], [
   ...use_array,...use_optionalNbt, ...use_nbt, ...use_entityMetadataLoop,
   ...use_topBitSetTerminatedArray, ...use_bitfield, ...use_switch
 ])
+
+hf = [...new Set(hf.map(JSON.stringify))].map(JSON.parse);
 
 console.log(hf.map(({ path }) => `static int hf_${path} = -1;`).join("\n"))
 

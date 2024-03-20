@@ -1,6 +1,8 @@
-#include <config.h>
+/* #include <config.h> */
 
 #define WS_BUILD_DLL
+#define VERSION_MAJOR 4
+#define VERSION_MINOR 2
 
 #include <epan/packet.h>
 #include <epan/proto.h>
